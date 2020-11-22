@@ -13,13 +13,21 @@ player_data_handler:
 
     on delta time minutely every:5:
       - define list <yaml.list>
+
       - foreach <server.online_players> as:player:
         - if !<[list].contains[player.<[player].uuid>]>:
+          - if !<server.has_file[data/global/players/<[player].uuid>.yml]>:
+            - yaml id:player.<[player].uuid> create
+            - yaml id:player.<[player].uuid> savefile:data/players/<[player].uuid>.yml
           - ~yaml id:player.<[player].uuid> load:data/players/<[player].uuid>.yml
         - else:
           - ~yaml id:player.<[player].uuid> savefile:data/players/<[player].uuid>.yml
-        - if !<[list].contains[pglobal.player.<[player].uuid>]>:
-          - ~yaml id:player.<[player].uuid> load:data/global/players/<[player].uuid>.yml
+
+        - if !<[list].contains[global.player.<[player].uuid>]>:
+          - if !<server.has_file[data/global/players/<[player].uuid>.yml]>:
+            - yaml id:global.player.<[player].uuid> create
+            - yaml id:global.player.<[player].uuid> savefile:data/global/players/<[player].uuid>.yml
+          - ~yaml id:global.player.<[player].uuid> load:data/global/players/<[player].uuid>.yml
         - else:
           - ~yaml id:global.player.<[player].uuid> savefile:data/global/players/<[player].uuid>.yml
 
@@ -54,7 +62,7 @@ player_Data_Join_Event:
     - define player_map <map.with[name].as[<[name]>].with[Server].as[<bungee.server>]>
     - if <yaml[<[global_yaml]>].contains[rank]>:
       - define player_map <[player_map].with[rank].as[<yaml[global.player.<[uuid]>].read[rank].strip_color>]>
-      
+
     - waituntil rate:1s <bungee.connected>
     - if <[Event]> == Joined:
       - bungeerun relay player_Join_Message def:<list_single[<[player_map]>]>
@@ -110,6 +118,7 @@ unload_player_data:
 
 player_data_safe_modify:
   type: task
+  debug: false
   definitions: uuid|node|value
   script:
     - yaml id:global.player.<[uuid]> set <[node]>:<[value]>
